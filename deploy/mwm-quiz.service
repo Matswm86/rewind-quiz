@@ -1,0 +1,16 @@
+[Unit]
+Description=Rewind quiz game server (quiz.mwmai.no)
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/services/mwm-quiz
+Environment=QUIZ_PORT=8795
+Environment=QUIZ_DATA_DIR=%h/services/mwm-quiz/data
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/usr/bin/python3 %h/services/mwm-quiz/server.py
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=default.target

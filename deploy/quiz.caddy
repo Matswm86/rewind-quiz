@@ -1,0 +1,38 @@
+# quiz.mwmai.no: Rewind, the multiplayer decades quiz (mwm-lab/quiz).
+# Static site from /var/www/quiz; the game API goes to the mwm-quiz user
+# service on 127.0.0.1:8795. The API answers 200 even for errors, so a room of
+# players behind one Wi-Fi IP never trips the caddy-4xx fail2ban jail.
+quiz.mwmai.no {
+	encode zstd gzip
+
+	handle /api/* {
+		reverse_proxy 127.0.0.1:8795
+	}
+
+	handle {
+		root * /var/www/quiz
+		# Browsers probe these even with <link rel=icon>; answer instead of 404.
+		@icons path /favicon.ico /apple-touch-icon.png /apple-touch-icon-precomposed.png
+		rewrite @icons /icon-180.png
+		@fresh path / /index.html /*.js /*.css /*.webmanifest
+		header @fresh Cache-Control "no-cache"
+		@static path /fonts/* /*.png /*.svg
+		header @static Cache-Control "public, max-age=604800"
+		file_server
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
+		-Server
+	}
+
+	# fail2ban reads this file; a vhost without it is invisible to the jails.
+	log {
+		output file /var/log/caddy/access.log
+		format json
+	}
+}

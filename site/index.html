@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rewind Quiz</title>
+<meta name="description" content="A multiplayer quiz through the decades, from the 1950s to the 2000s. Up to 20 players, each on their own phone.">
+<meta name="theme-color" content="#15103A">
+<meta name="color-scheme" content="dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rewind">
+<meta name="format-detection" content="telephone=no">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Rewind: the decades quiz">
+<meta property="og:description" content="History, film, music, sport and celebrities from the 1950s to the 2000s. Join on your phone and play against up to 19 friends.">
+<meta property="og:url" content="https://quiz.mwmai.no/">
+<meta property="og:image" content="https://quiz.mwmai.no/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="preload" href="fonts/bungee-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/atkinson-hyperlegible-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="styles.css">
+<script src="qrcode.js" defer></script>
+<script src="app.js" defer></script>
+</head>
+<body>
+<div id="net" hidden>Reconnecting…</div>
+
+<main id="app">
+
+  <!-- Home: name, join, host -->
+  <section id="screen-home" class="screen">
+    <header class="brand">
+      <h1 class="logo" aria-label="Rewind">Rewind</h1>
+      <p class="tagline">The decades quiz. History, film, music, sport and famous faces from the 1950s to the 2000s.</p>
+      <ol class="ribbon" aria-label="Decades in the quiz">
+        <li class="d1950">50s</li><li class="d1960">60s</li><li class="d1970">70s</li><li class="d1980">80s</li><li class="d1990">90s</li><li class="d2000">00s</li>
+      </ol>
+    </header>
+
+    <div class="field">
+      <label for="name">Your name</label>
+      <input id="name" type="text" maxlength="16" autocomplete="nickname" autocapitalize="words" autocorrect="off" spellcheck="false" enterkeyhint="done" placeholder="Name on the scoreboard">
+    </div>
+
+    <form class="panel" id="join-form" novalidate>
+      <h2 id="join-title">Join a game</h2>
+      <label for="code" class="sub">Game code from the host</label>
+      <div class="row">
+        <input id="code" class="code-input" type="text" maxlength="4" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" enterkeyhint="go" placeholder="ABCD" aria-label="Game code">
+        <button id="join-btn" class="btn primary" type="submit">Join</button>
+      </div>
+    </form>
+
+    <form class="panel" id="host-form" novalidate>
+      <h2>Host a game</h2>
+      <div class="seg" role="radiogroup" aria-label="Game length">
+        <button type="button" role="radio" aria-checked="true" data-mode="25"><b>25</b><span>questions</span><small>about 10 min</small></button>
+        <button type="button" role="radio" aria-checked="false" data-mode="50"><b>50</b><span>questions</span><small>about 20 min</small></button>
+      </div>
+      <button id="host-btn" class="btn" type="submit">Create game</button>
+      <p class="sub">You get a code and a QR code to share. Up to 20 players.</p>
+    </form>
+
+    <p class="foot"><button id="hof-btn" class="link" type="button">Hall of fame</button></p>
+  </section>
+
+  <!-- Lobby -->
+  <section id="screen-lobby" class="screen" hidden>
+    <div class="lobby-top">
+      <p class="eyebrow">Game code</p>
+      <div class="code-big" id="lobby-code" aria-live="polite"></div>
+      <p class="sub" id="lobby-mode"></p>
+    </div>
+    <div class="invite">
+      <div class="qr" id="qr" role="img" aria-label="QR code for the invite link"></div>
+      <div class="invite-actions">
+        <p class="invite-url" id="invite-url"></p>
+        <button id="share-btn" class="btn" type="button">Share invite</button>
+        <button id="copy-btn" class="btn ghost" type="button">Copy link</button>
+      </div>
+    </div>
+    <div class="list-head"><h2>Players</h2><span id="lobby-count" class="count"></span></div>
+    <ul class="chips" id="lobby-players"></ul>
+    <div class="dock">
+      <button id="start-btn" class="btn primary big" type="button">Start game</button>
+      <p id="lobby-note" class="note"></p>
+      <button id="leave-btn" class="link" type="button">Leave game</button>
+    </div>
+  </section>
+
+  <!-- Question and reveal -->
+  <section id="screen-play" class="screen" hidden>
+    <div class="hud">
+      <div class="hud-row">
+        <span id="qnum" class="qnum"></span>
+        <span class="myscore"><b id="myscore">0</b> pts</span>
+      </div>
+      <div class="track" id="track" aria-hidden="true"></div>
+    </div>
+
+    <div class="qcard" id="qcard">
+      <div class="qmeta"><span class="decade-tag" id="decade-tag"></span><span class="cat" id="cat"></span></div>
+      <h2 class="qtext" id="qtext"></h2>
+      <div class="timer" id="timer">
+        <div class="timer-bar"><div class="timer-fill" id="timer-fill"></div></div>
+        <span class="timer-num" id="timer-num"></span>
+      </div>
+      <div class="result" id="result" hidden></div>
+    </div>
+
+    <div class="answers" id="answers"></div>
+    <p class="note" id="play-note" aria-live="polite"></p>
+
+    <div class="reveal" id="reveal" hidden>
+      <p class="fact" id="fact"></p>
+      <div class="list-head"><h2>Scoreboard</h2><span class="count" id="board-count"></span></div>
+      <ol class="board" id="mini-board"></ol>
+      <div class="dock">
+        <button id="next-btn" class="btn primary big" type="button">Next question</button>
+        <p id="next-note" class="note"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Final -->
+  <section id="screen-final" class="screen" hidden>
+    <div class="final-head">
+      <p class="eyebrow">Final scores</p>
+      <h2 class="final-title" id="final-title"></h2>
+      <p class="sub" id="final-sub"></p>
+    </div>
+    <div class="podium" id="podium"></div>
+    <ol class="board" id="final-board"></ol>
+    <div class="panel">
+      <h3>Your decades</h3>
+      <ul class="decade-bars" id="decade-bars"></ul>
+      <p class="sub" id="hof-note" hidden></p>
+    </div>
+    <div class="dock">
+      <button id="again-btn" class="btn primary big" type="button">Rematch with new questions</button>
+      <p id="again-note" class="note"></p>
+      <div class="row two">
+        <button id="final-hof-btn" class="btn ghost" type="button">Hall of fame</button>
+        <button id="home-btn" class="btn ghost" type="button">Leave</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Hall of fame -->
+  <section id="screen-hof" class="screen" hidden>
+    <div class="hof-head">
+      <button id="hof-back" class="link back" type="button">Back</button>
+      <h2>Hall of fame</h2>
+      <p class="sub">The 20 best scores of all time. A perfect game scores 1,000 points a question.</p>
+    </div>
+    <div class="seg tabs" role="tablist" aria-label="Game length">
+      <button type="button" role="tab" aria-selected="true" data-board="25"><b>25</b><span>questions</span></button>
+      <button type="button" role="tab" aria-selected="false" data-board="50"><b>50</b><span>questions</span></button>
+    </div>
+    <ol class="board hof" id="hof-list"></ol>
+    <p class="note" id="hof-empty" hidden>No finished games yet. Host one and take the top spot.</p>
+  </section>
+
+</main>
+
+<div id="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>

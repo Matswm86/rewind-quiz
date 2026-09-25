@@ -1,0 +1,15 @@
+{
+  "name": "Rewind: the decades quiz",
+  "short_name": "Rewind",
+  "description": "A multiplayer quiz through the decades, 1950s to 2000s.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#15103A",
+  "theme_color": "#15103A",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
