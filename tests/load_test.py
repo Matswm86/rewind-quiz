@@ -7,6 +7,7 @@ Each player runs its own long-poll loop, like a phone would, and answers after a
 random delay. Checks the 21st player is turned away and that every player sees
 the same final standings.
 """
+
 from __future__ import annotations
 
 import json
@@ -21,7 +22,9 @@ BASE = sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8799"
 
 def call(path: str, body: dict | None = None, timeout: float = 40) -> dict:
     data = json.dumps(body).encode() if body is not None else None
-    req = urllib.request.Request(BASE + path, data=data, headers={"Content-Type": "application/json"})
+    req = urllib.request.Request(
+        BASE + path, data=data, headers={"Content-Type": "application/json"}
+    )
     with urllib.request.urlopen(req, timeout=timeout) as r:
         assert r.status == 200
         return json.loads(r.read())
@@ -39,7 +42,15 @@ def player(me: dict, results: dict, errors: list) -> None:
                 i = s["q"]["index"]
                 answered.add(i)
                 time.sleep(random.uniform(0.05, 1.5))
-                r = call("/api/answer", {"code": me["code"], "token": me["token"], "index": i, "choice": random.randrange(4)})
+                r = call(
+                    "/api/answer",
+                    {
+                        "code": me["code"],
+                        "token": me["token"],
+                        "index": i,
+                        "choice": random.randrange(4),
+                    },
+                )
                 assert r["ok"] or r["error"] == "too_late", r
             if s["phase"] == "finished":
                 results[me["id"]] = [(p["name"], p["score"]) for p in s["players"]]
@@ -50,7 +61,9 @@ def player(me: dict, results: dict, errors: list) -> None:
 
 def main() -> None:
     host = call("/api/create", {"name": "Host", "mode": 50})
-    players = [host] + [call("/api/join", {"code": host["code"], "name": f"Player {i}"}) for i in range(1, 20)]
+    players = [host] + [
+        call("/api/join", {"code": host["code"], "name": f"Player {i}"}) for i in range(1, 20)
+    ]
     assert all(p["ok"] for p in players)
     extra = call("/api/join", {"code": host["code"], "name": "Number 21"})
     assert extra == {"ok": False, "error": "game_full"}, extra
@@ -71,7 +84,9 @@ def main() -> None:
     boards = {json.dumps(b) for b in results.values()}
     assert len(boards) == 1, "players saw different final standings"
     board = results[host["id"]]
-    print(f"50 questions played in {time.time() - started:.0f}s; winner {board[0][0]} with {board[0][1]:,} points")
+    print(
+        f"50 questions played in {time.time() - started:.0f}s; winner {board[0][0]} with {board[0][1]:,} points"
+    )
     print("LOAD TEST PASSED")
 
 

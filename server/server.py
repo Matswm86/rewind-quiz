@@ -12,9 +12,10 @@ every online player has answered, the answer is revealed with the scoreboard,
 and the next question follows automatically.
 
 Every API reply is HTTP 200, with {"ok": false, "error": ...} on failure.
-Twenty players on one home Wi-Fi share a single public IP, and the VPS
-caddy-4xx fail2ban jail bans an IP after 30 4xx responses in 5 minutes.
+Twenty players on one home Wi-Fi share a single public IP, so a fail2ban jail
+that bans on bursts of 4xx responses would lock out the whole room.
 """
+
 from __future__ import annotations
 
 import json
@@ -27,7 +28,7 @@ import secrets
 import threading
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
@@ -363,7 +364,7 @@ def save_leaderboard() -> None:
 
 def record_leaderboard(room: Room) -> None:
     board = LEADERBOARD[str(room.mode)]
-    date = datetime.now(timezone.utc).date().isoformat()
+    date = datetime.now(UTC).date().isoformat()
     field_size = len(room.active())
     entries = {}
     for p in room.players.values():
@@ -448,7 +449,9 @@ def snapshot(room: Room, me: Player) -> dict:
             "text": q["q"],
             "options": q["options"],
             "duration_ms": QUESTION_MS,
-            "remaining_ms": max(0, int((room.deadline - t) * 1000)) if room.phase == "question" else 0,
+            "remaining_ms": max(0, int((room.deadline - t) * 1000))
+            if room.phase == "question"
+            else 0,
             "your_choice": mine[0] if mine else None,
             "answered": sum(1 for p in room.players.values() if room.index in p.answers),
             "online": len(online),
@@ -473,7 +476,9 @@ def snapshot(room: Room, me: Player) -> dict:
         for d in DECADES:
             asked = [i for i, q in enumerate(room.questions) if q["decade"] == d]
             right = sum(
-                1 for i in asked if i in me.answers and me.answers[i][0] == room.questions[i]["correct"]
+                1
+                for i in asked
+                if i in me.answers and me.answers[i][0] == room.questions[i]["correct"]
             )
             by_decade.append({"decade": d, "right": right, "asked": len(asked)})
         snap["final"] = {
@@ -579,7 +584,9 @@ def api_start(data: dict, ip: str) -> dict:
         room.hof = {}
         for pl in room.players.values():
             pl.reset()
-        log.info("room %s game %d started with %d players", room.code, room.game_no, len(room.active()))
+        log.info(
+            "room %s game %d started with %d players", room.code, room.game_no, len(room.active())
+        )
         begin_question(room, 0)
         return {"ok": True}
 
@@ -602,7 +609,9 @@ def api_answer(data: dict, ip: str) -> dict:
         t = now()
         remaining = max(0.0, room.deadline - t)
         q = room.questions[index]
-        points = 500 + round(500 * remaining / (QUESTION_MS / 1000)) if choice == q["correct"] else 0
+        points = (
+            500 + round(500 * remaining / (QUESTION_MS / 1000)) if choice == q["correct"] else 0
+        )
         p.answers[index] = (choice, points, int((t - room.q_started) * 1000))
         p.last_seen = t
         if all_answered(room):
@@ -692,7 +701,10 @@ def api_state(code, token, since: int, hold: float = POLL_HOLD_S) -> dict:
 
 def api_leaderboard() -> dict:
     with COND:
-        return {"ok": True, "boards": {m: rows[:LEADERBOARD_SHOW] for m, rows in LEADERBOARD.items()}}
+        return {
+            "ok": True,
+            "boards": {m: rows[:LEADERBOARD_SHOW] for m, rows in LEADERBOARD.items()},
+        }
 
 
 POST_ACTIONS = {
@@ -724,7 +736,9 @@ class Handler(BaseHTTPRequestHandler):
         forwarded = self.headers.get("X-Forwarded-For", "")
         return forwarded.split(",")[-1].strip() or self.client_address[0]
 
-    def send_body(self, body: bytes, ctype: str, status: int = 200, cache: str = "no-store") -> None:
+    def send_body(
+        self, body: bytes, ctype: str, status: int = 200, cache: str = "no-store"
+    ) -> None:
         try:
             self.send_response(status)
             self.send_header("Content-Type", ctype)
@@ -816,7 +830,9 @@ def load_bank() -> None:
     for d in DECADES:
         n = sum(1 for q in BANK if q["decade"] == d)
         if n < -(-max(MODES) // len(DECADES)):
-            raise SystemExit(f"only {n} questions for the {d}s; need more for a {max(MODES)}-question game")
+            raise SystemExit(
+                f"only {n} questions for the {d}s; need more for a {max(MODES)}-question game"
+            )
 
 
 def main() -> None:

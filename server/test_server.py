@@ -1,4 +1,5 @@
 """Game-logic tests for server.py. Run: python3 -m unittest test_server -v"""
+
 from __future__ import annotations
 
 import json
@@ -127,7 +128,9 @@ class GameTests(unittest.TestCase):
         return self.room(h["code"])
 
     def answer(self, res: dict, index: int, choice: int) -> dict:
-        return S.api_answer({"code": res["code"], "token": res["token"], "index": index, "choice": choice}, "ip")
+        return S.api_answer(
+            {"code": res["code"], "token": res["token"], "index": index, "choice": choice}, "ip"
+        )
 
     def test_question_hides_answer_until_reveal(self) -> None:
         h = self.host()
@@ -293,7 +296,9 @@ class HttpTests(unittest.TestCase):
 
     def post(self, path: str, body: dict) -> dict:
         req = urllib.request.Request(
-            self.base + path, data=json.dumps(body).encode(), headers={"Content-Type": "application/json"}
+            self.base + path,
+            data=json.dumps(body).encode(),
+            headers={"Content-Type": "application/json"},
         )
         with urllib.request.urlopen(req, timeout=5) as r:
             self.assertEqual(r.status, 200)
@@ -305,7 +310,9 @@ class HttpTests(unittest.TestCase):
             return json.loads(r.read())
 
     def test_errors_are_http_200(self) -> None:
-        self.assertEqual(self.post("/api/join", {"code": "QQQQ", "name": "x"}), {"ok": False, "error": "no_game"})
+        self.assertEqual(
+            self.post("/api/join", {"code": "QQQQ", "name": "x"}), {"ok": False, "error": "no_game"}
+        )
         self.assertFalse(self.get("/api/nope")["ok"])
 
     def test_long_poll_wakes_on_join(self) -> None:

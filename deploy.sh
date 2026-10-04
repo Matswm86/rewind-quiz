@@ -2,11 +2,10 @@
 # Deploy Rewind to https://quiz.mwmai.no. Run from your workstation; it needs
 # SSH to the VPS as a user with sudo (you may be asked for the sudo password).
 #
-#   ./deploy.sh                       # mats@204.168.244.173
 #   VPS=user@host ./deploy.sh
 set -euo pipefail
 
-VPS="${VPS:-mats@204.168.244.173}"
+VPS="${VPS:?set VPS=user@host, the SSH target of your server}"
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo "==> Tests"

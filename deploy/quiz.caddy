@@ -1,7 +1,7 @@
-# quiz.mwmai.no: Rewind, the multiplayer decades quiz (mwm-lab/quiz).
+# quiz.mwmai.no: Rewind, the multiplayer decades quiz .
 # Static site from /var/www/quiz; the game API goes to the mwm-quiz user
 # service on 127.0.0.1:8795. The API answers 200 even for errors, so a room of
-# players behind one Wi-Fi IP never trips the caddy-4xx fail2ban jail.
+# players behind one Wi-Fi IP never trips a fail2ban jail that bans on 4xx.
 quiz.mwmai.no {
 	encode zstd gzip
 
