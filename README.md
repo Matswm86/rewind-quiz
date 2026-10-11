@@ -2,6 +2,16 @@
 
 A multiplayer quiz for phones at **https://quiz.mwmai.no**. The questions cover history, culture, film, sport, celebrities, events and fun facts from the 1950s to the 2000s.
 
+![A Rewind question on a phone: decade and category, the question, a countdown bar and four answer buttons](docs/screenshot.png)
+
+*Question 1 of 25 in a game, as it looks on a phone.*
+
+## Download
+
+Nothing to install: [open it in the browser](https://quiz.mwmai.no) on a phone. The page can be added to the home screen.
+
+## What it does
+
 - **Two lengths**: 25 questions (about 10 minutes) or 50 questions (about 20). Questions run in decade order, spread evenly over the six decades, with categories varied inside each decade.
 - **Up to 20 players**. The host creates a game and gets a 4-letter code, a QR code and a share link (the phone's share sheet on iOS and Android). Players join from their own phones.
 - **Live rounds**: everyone sees the same question at the same moment with a 20-second timer. A correct answer scores 500 to 1,000 points depending on speed. A question closes early once every connected player has answered.
@@ -27,6 +37,10 @@ rewind-quiz/
 │   ├── mwm-quiz.service   systemd user unit
 │   └── install_remote.sh  runs on the VPS
 ├── deploy.sh              one-command deploy from the workstation
+├── docs/
+│   └── screenshot.png     the screenshot at the top of this README
+├── .github/workflows/
+│   └── test.yml           CI: runs the unit tests on every push and pull request
 └── tests/
     ├── e2e.js             3 emulated phones play a full game (Playwright)
     └── load_test.py       20 players play a 50-question game over HTTP
@@ -39,6 +53,10 @@ Caddy serves `site/` from `/var/www/quiz` and proxies `/api/*` to `server.py` on
 Clients long-poll `GET /api/state?g=CODE&p=TOKEN&v=VERSION`. The server holds the request until the room changes (or 25 s pass), so every phone gets updates within milliseconds without WebSockets. The server owns the clock and the answers: a question's correct option is only sent once it is revealed.
 
 Every API reply is HTTP 200, errors included (`{"ok": false, "error": "no_game"}`). A room of 20 players on one home Wi-Fi shares a single public IP, so a fail2ban jail that bans an IP after a burst of 4xx responses would lock out the whole room. If you run fail2ban on the Caddy log, size any flood jail for that case before pointing it at this site.
+
+## Status
+
+Live at https://quiz.mwmai.no; there are no tagged releases. Game rooms are kept in memory, so restarting the server ends running games, and only the Hall of Fame is saved to disk.
 
 ## Deploy
 
@@ -61,6 +79,8 @@ curl -s http://127.0.0.1:8795/api/health
 To reset the Hall of Fame, stop the service, delete `~/services/mwm-quiz/data/leaderboard.json` and start it again.
 
 ## Local development
+
+The server needs Python 3.11 or newer (CI runs 3.12) and nothing from PyPI. The end-to-end test needs Node and Playwright.
 
 ```bash
 QUIZ_STATIC=site QUIZ_PORT=8799 python3 server/server.py     # open http://127.0.0.1:8799
